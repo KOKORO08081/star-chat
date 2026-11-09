@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>별자리가 보이는 밤 - Private Secret Space</title>
-    <!-- PeerJS P2P 통신 라이브러리 -->
+    <!-- PeerJS P2P 음성통화 라이브러리 -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -39,15 +39,15 @@
         .starry-header {
             background: linear-gradient(180deg, #070b14 0%, #111b2e 100%);
             border-bottom: 2px solid #ffd166;
-            padding: 16px;
+            padding: 14px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .starry-title { display: flex; align-items: center; gap: 10px; }
-        .star-icon { font-size: 26px; filter: drop-shadow(0 0 8px #ffd166); }
-        .header-text h1 { font-size: 16px; color: #ffd166; font-weight: 700; letter-spacing: 1px; }
+        .star-icon { font-size: 24px; filter: drop-shadow(0 0 8px #ffd166); }
+        .header-text h1 { font-size: 15px; color: #ffd166; font-weight: 700; letter-spacing: 1px; }
         .header-text p { font-size: 11px; color: #8da9c4; margin-top: 2px; }
 
         .header-actions { display: flex; gap: 8px; }
@@ -57,11 +57,11 @@
             background: #0b111e; 
             border: 1px solid #ffd166; 
             color: #ffd166; 
-            width: 38px; 
-            height: 38px; 
+            width: 36px; 
+            height: 36px; 
             border-radius: 4px; 
             cursor: pointer; 
-            font-size: 15px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -72,4 +72,454 @@
         /* 음성 통화 상태 바 */
         .call-bar {
             background: #111b2e;
-            border-bottom
+            border-bottom: 2px solid #ffd166;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #ffd166;
+        }
+
+        /* 채팅 영역 */
+        .chat-box { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: #0b111e; 
+        }
+
+        .system-msg { 
+            align-self: center; 
+            font-size: 11px; 
+            color: #ffd166; 
+            background: #111b2e; 
+            border: 1px solid #ffd166; 
+            padding: 6px 14px; 
+            border-radius: 4px; 
+            text-align: center;
+        }
+
+        .msg-bubble { 
+            max-width: 78%; 
+            padding: 10px 14px; 
+            border-radius: 6px; 
+            font-size: 13px; 
+            line-height: 1.4; 
+            word-break: break-all; 
+            position: relative;
+        }
+
+        .msg-sender {
+            font-size: 10px;
+            color: #8da9c4;
+            margin-bottom: 3px;
+        }
+
+        .msg-bubble.me { 
+            align-self: flex-end; 
+            background: #ffd166; 
+            color: #0b111e; 
+            font-weight: 600; 
+            border: 1px solid #ffc93c;
+        }
+
+        .msg-bubble.other { 
+            align-self: flex-start; 
+            background: #17253d; 
+            color: #ffffff; 
+            border: 1px solid #3d5a80; 
+        }
+
+        .msg-bubble img { max-width: 100%; border-radius: 4px; margin-top: 5px; }
+        .msg-bubble a { color: #ffd166; text-decoration: underline; font-weight: bold; }
+
+        /* 하단 입력 영역 */
+        .input-area { 
+            padding: 12px 14px; 
+            background: #111b2e; 
+            border-top: 2px solid #ffd166; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        .input-area input[type="text"] { 
+            flex: 1; 
+            background: #0b111e; 
+            color: #ffffff; 
+            border: 1px solid #ffd166; 
+            padding: 10px 14px; 
+            border-radius: 4px; 
+            outline: none; 
+            font-size: 13px;
+        }
+
+        .square-btn { 
+            background: #ffd166; 
+            color: #0b111e; 
+            border: 1px solid #ffd166; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            width: 38px; 
+            height: 38px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .square-btn:hover { background: #ffc93c; }
+
+        .send-btn { width: auto; padding: 0 16px; font-size: 13px; }
+
+        /* 모달 공통 */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 17, 30, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            width: 100%;
+            max-height: 85vh;
+            background: #17253d;
+            border: 2px solid #ffd166;
+            border-radius: 6px; 
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255, 209, 102, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-card h3 { color: #ffd166; margin-bottom: 16px; font-size: 16px; text-align: center; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; color: #8da9c4; margin-bottom: 4px; }
+        .form-group input, .form-group textarea { 
+            width: 100%; 
+            background: #0b111e; 
+            border: 1px solid #ffd166; 
+            color: #fff; 
+            padding: 8px 10px; 
+            border-radius: 4px; 
+            font-size: 13px;
+        }
+        .form-group textarea { resize: none; height: 50px; }
+
+        .song-post-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            margin: 12px 0;
+            padding-right: 4px;
+        }
+
+        .song-post-card { 
+            background: #0b111e; 
+            border: 1px solid #ffd166; 
+            padding: 12px; 
+            border-radius: 4px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+        }
+
+        .song-post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #3d5a80;
+            padding-bottom: 6px;
+        }
+
+        .song-title { font-size: 14px; font-weight: bold; color: #ffd166; }
+        .song-artist { font-size: 12px; color: #8da9c4; }
+        .song-writer { font-size: 10px; color: #ffd166; background: #111b2e; padding: 2px 6px; border-radius: 3px; border: 1px solid #ffd166; }
+        .song-comment { font-size: 12px; color: #e0e6ed; line-height: 1.4; margin-top: 4px; word-break: break-all; }
+
+        .hidden { display: none !important; }
+        #file-input { display: none; }
+    </style>
+
+    <!-- Firebase SDK 모듈 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // 공용 실시간 데이터베이스 설정
+        const firebaseConfig = {
+            databaseURL: "https://starry-chat-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 현재 접속 방 이름 (기본값: room2)
+        const roomName = window.location.hash ? window.location.hash.substring(1) : "room2";
+        const messagesRef = ref(db, 'rooms/' + roomName + '/messages');
+        const songsRef = ref(db, 'rooms/' + roomName + '/songs');
+
+        // 내 고유 ID 생성
+        const myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        window.myUserId = myUserId;
+
+        // 내 프로필 로드
+        let userNickname = localStorage.getItem('star_nick') || "별빛탐험가";
+        let userBirthday = localStorage.getItem('star_birth') || "";
+        window.userNickname = userNickname;
+        window.userBirthday = userBirthday;
+
+        // DOM이 완전히 준비된 후 엘리먼트에 안전하게 값을 할당하도록 수정
+        document.addEventListener('DOMContentLoaded', () => {
+            const nickInput = document.getElementById('setting-nickname');
+            const birthInput = document.getElementById('setting-birthday');
+            const roomDisplay = document.getElementById('room-id-display');
+
+            if (nickInput) nickInput.value = userNickname;
+            if (birthInput) birthInput.value = userBirthday;
+            if (roomDisplay) roomDisplay.innerText = `#${roomName}`;
+
+            updateHeaderInfo();
+        });
+
+        // 1. 실시간 메시지 수신 (웹소켓 오류 없는 실시간 전송)
+        onChildAdded(messagesRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const isMe = data.userId === myUserId;
+            if (data.type === 'text') {
+                appendMsg((isMe ? "나: " : data.sender + ": ") + data.content, isMe ? 'me' : 'other');
+            } else if (data.type === 'file') {
+                appendFileMsg(isMe ? "나" : data.sender, data.fileName, data.fileData, isMe ? 'me' : 'other');
+            } else if (data.type === 'reaction') {
+                appendMsg("⭐ " + (isMe ? "내가" : data.sender + "님이") + " 반짝이는 별빛을 보냈습니다!", isMe ? 'me' : 'other');
+            }
+        });
+
+        // 2. 노래 게시판 실시간 전송 및 수신
+        onValue(songsRef, (snapshot) => {
+            const data = snapshot.val();
+            const songList = [];
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    songList.unshift(data[key]);
+                });
+            }
+            window.songPosts = songList;
+            renderSongPosts();
+        });
+
+        // 전역 함수 연동 (버튼 클릭용)
+        window.sendText = function() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (text) {
+                push(messagesRef, {
+                    type: 'text',
+                    userId: myUserId,
+                    sender: userNickname,
+                    content: text,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+            }
+        };
+
+        window.sendFile = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                alert("파일 크기는 2MB 이하만 전송 가능합니다.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                push(messagesRef, {
+                    type: 'file',
+                    userId: myUserId,
+                    sender: userNickname,
+                    fileName: file.name,
+                    fileData: e.target.result,
+                    timestamp: Date.now()
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.sendReaction = function() {
+            push(messagesRef, {
+                type: 'reaction',
+                userId: myUserId,
+                sender: userNickname,
+                timestamp: Date.now()
+            });
+        };
+
+        window.postSong = function() {
+            const titleInput = document.getElementById('song-title-input');
+            const artistInput = document.getElementById('song-artist-input');
+            const commentInput = document.getElementById('song-comment-input');
+
+            const title = titleInput.value.trim();
+            const artist = artistInput.value.trim();
+            const comment = commentInput.value.trim();
+
+            if (!title || !artist) {
+                return alert("노래 제목과 가수를 입력해주세요!");
+            }
+
+            push(songsRef, {
+                id: Date.now(),
+                title: title,
+                artist: artist,
+                comment: comment || "이 노래 같이 들어요!",
+                writer: userNickname
+            });
+
+            titleInput.value = '';
+            artistInput.value = '';
+            commentInput.value = '';
+        };
+
+        window.renderSongPosts = function() {
+            const container = document.getElementById('song-post-list');
+            if (!container) return;
+
+            const posts = window.songPosts || [];
+            container.innerHTML = '';
+
+            if (posts.length === 0) {
+                container.innerHTML = '<div style="text-align:center; font-size:12px; color:#8da9c4; padding:20px;">아직 게시된 추천 노래가 없습니다.<br>위 폼에서 둘만의 노래를 추가해 보세요!</div>';
+                return;
+            }
+
+            posts.forEach(post => {
+                const card = document.createElement('div');
+                card.className = 'song-post-card';
+                card.innerHTML = `
+                    <div class="song-post-header">
+                        <div>
+                            <div class="song-title">🎶 ${post.title}</div>
+                            <div class="song-artist">${post.artist}</div>
+                        </div>
+                        <span class="song-writer">작성자: ${post.writer}</span>
+                    </div>
+                    <div class="song-comment">💬 ${post.comment}</div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        window.appendMsg = function(msg, type) {
+            const box = document.getElementById('chat-box');
+            if (!box) return;
+            const div = document.createElement('div');
+            div.className = type === 'system' ? 'system-msg' : `msg-bubble ${type}`;
+            div.innerText = msg;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        };
+
+        window.appendFileMsg = function(sender, fileName, fileData, type) {
+            const box = document.getElementById('chat-box');
+            if (!box) return;
+            const div = document.createElement('div');
+            div.className = `msg-bubble ${type}`;
+            
+            if (fileData.startsWith('data:image')) {
+                div.innerHTML = `${sender}: <br><img src="${fileData}" alt="${fileName}">`;
+            } else {
+                div.innerHTML = `${sender}: <br><a href="${fileData}" download="${fileName}">📎 ${fileName}</a>`;
+            }
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        };
+
+        window.toggleSettingsModal = function() {
+            document.getElementById('settings-modal').classList.toggle('active');
+        };
+
+        window.saveSettings = function() {
+            const nick = document.getElementById('setting-nickname').value || "별빛탐험가";
+            const birth = document.getElementById('setting-birthday').value;
+            window.userNickname = nick;
+            window.userBirthday = birth;
+            localStorage.setItem('star_nick', nick);
+            localStorage.setItem('star_birth', birth);
+            updateHeaderInfo();
+            toggleSettingsModal();
+        };
+
+        window.updateHeaderInfo = function() {
+            let birthText = window.userBirthday ? ` | 🎂 ${window.userBirthday}` : '';
+            const el = document.getElementById('user-info-text');
+            if (el) el.innerText = `${window.userNickname}님${birthText}`;
+        };
+
+        window.toggleMusicModal = function() {
+            document.getElementById('music-modal').classList.toggle('active');
+        };
+
+        // 3. WebRTC 음성 통화 (방이름 기반 P2P)
+        let localStream = null;
+        let currentCall = null;
+        let peer = null;
+
+        window.toggleAudioCall = function() {
+            if (!peer) {
+                const callPeerId = roomName + '_' + (Math.random() > 0.5 ? 'userA' : 'userB');
+                peer = new Peer(callPeerId);
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(stream => {
+                    localStream = stream;
+                    showCallBar("🎙️ 상대방 통화 연결 대기 중...");
+                    const targetId = roomName + '_' + (peer.id.endsWith('userA') ? 'userB' : 'userA');
+                    const call = peer.call(targetId, stream);
+                    
+                    if (call) {
+                        call.on('stream', remoteStream => {
+                            document.getElementById('remote-audio').srcObject = remoteStream;
+                            showCallBar("🎙️ 음성 통화 중");
+                        });
+                        currentCall = call;
+                    }
+                })
+                .catch(err => alert("마이크 권한 요청 승인이 필요합니다."));
+        };
+
+        window.endCall = function() {
+            if (currentCall) currentCall.close();
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            document.getElementById('call-bar').classList.add('hidden');
+        };
+
+        window.showCallBar = function(text) {
+            document.getElementById('call-bar').classList.remove('hidden');
+            document.getElementById('call-status').innerText = text;
+        };
+    </script>
+</body>
+</html>
