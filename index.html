@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>별자리가 보이는 밤 - Private Secret Space</title>
+    <!-- PeerJS P2P 통신 라이브러리 -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+        
+        /* 1. 연남색 다크모드 배경 */
+        body { 
+            background-color: #0b111e; 
+            color: #f0f4f8; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            overflow: hidden;
+        }
+
+        /* 2. 메인 컨테이너 (네모네모 모서리 적용 & 노란색 테두리) */
+        .app-container { 
+            width: 100%; 
+            max-width: 480px; 
+            height: 92vh; 
+            background: #17253d; 
+            border: 2px solid #ffd166; 
+            border-radius: 6px; 
+            box-shadow: 0 0 25px rgba(255, 209, 102, 0.2); 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            overflow: hidden; 
+        }
+
+        /* 별자리가 보이는 밤 테마 헤더 */
+        .starry-header {
+            background: linear-gradient(180deg, #070b14 0%, #111b2e 100%);
+            border-bottom: 2px solid #ffd166;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .starry-title { display: flex; align-items: center; gap: 10px; }
+        .star-icon { font-size: 26px; filter: drop-shadow(0 0 8px #ffd166); }
+        .header-text h1 { font-size: 16px; color: #ffd166; font-weight: 700; letter-spacing: 1px; }
+        .header-text p { font-size: 11px; color: #8da9c4; margin-top: 2px; }
+
+        .header-actions { display: flex; gap: 8px; }
+        
+        /* 네모네모 아이콘 버튼 */
+        .icon-btn { 
+            background: #0b111e; 
+            border: 1px solid #ffd166; 
+            color: #ffd166; 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: #ffd166; color: #0b111e; }
+
+        /* 음성 통화 상태 바 */
+        .call-bar {
+            background: #111b2e;
+            border-bottom: 2px solid #ffd166;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #ffd166;
+        }
+
+        /* 채팅 영역 */
+        .chat-box { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: #0b111e; 
+        }
+
+        .system-msg { 
+            align-self: center; 
+            font-size: 11px; 
+            color: #ffd166; 
+            background: #111b2e; 
+            border: 1px solid #ffd166; 
+            padding: 6px 14px; 
+            border-radius: 4px; 
+        }
+
+        .msg-bubble { 
+            max-width: 75%; 
+            padding: 10px 14px; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            line-height: 1.4; 
+            word-break: break-all; 
+        }
+
+        .msg-bubble.me { 
+            align-self: flex-end; 
+            background: #ffd166; 
+            color: #0b111e; 
+            font-weight: 600; 
+            border: 1px solid #ffc93c;
+        }
+
+        .msg-bubble.other { 
+            align-self: flex-start; 
+            background: #17253d; 
+            color: #ffffff; 
+            border: 1px solid #3d5a80; 
+        }
+
+        .msg-bubble img { max-width: 100%; border-radius: 4px; margin-top: 5px; }
+        .msg-bubble a { color: #111b2e; text-decoration: underline; font-weight: bold; }
+
+        /* 하단 입력 영역 */
+        .input-area { 
+            padding: 12px 14px; 
+            background: #111b2e; 
+            border-top: 2px solid #ffd166; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        .input-area input[type="text"] { 
+            flex: 1; 
+            background: #0b111e; 
+            color: #ffffff; 
+            border: 1px solid #ffd166; 
+            padding: 10px 14px; 
+            border-radius: 4px; 
+            outline: none; 
+            font-size: 13px;
+        }
+
+        /* 네모네모 기능 버튼들 (+버튼, 반응버튼, 전송버튼) */
+        .square-btn { 
+            background: #ffd166; 
+            color: #0b111e; 
+            border: 1px solid #ffd166; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            width: 38px; 
+            height: 38px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .square-btn:hover {
+            background: #ffc93c;
+        }
+
+        .send-btn { 
+            width: auto; 
+            padding: 0 16px; 
+            font-size: 13px; 
+        }
+
+        /* 모달 팝업 */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 17, 30, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            width: 100%;
+            max-height: 85vh;
+            background: #17253d;
+            border: 2px solid #ffd166;
+            border-radius: 6px; 
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255, 209, 102, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-card h3 { color: #ffd166; margin-bottom: 16px; font-size: 17px; text-align: center; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; color: #8da9c4; margin-bottom: 4px; }
+        .form-group input, .form-group textarea { 
+            width: 100%; 
+            background: #0b111e; 
+            border: 1px solid #ffd166; 
+            color: #fff; 
+            padding: 8px 10px; 
+            border-radius: 4px; 
+            font-size: 13px;
+        }
+        .form-group textarea { resize: none; height: 50px; }
+
+        /* 노래 추천 게시판 게시글 카드 스타일 */
+        .song-post-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            margin: 12px 0;
+            padding-right: 4px;
+        }
+
+        .song-post-card { 
+            background: #0b111e; 
+            border: 1px solid #ffd166; 
+            padding: 12px; 
+            border-radius: 4px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+        }
+
+        .song-post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #3d5a80;
+            padding-bottom: 6px;
+        }
+
+        .song-title { font-size: 14px; font-weight: bold; color: #ffd166; }
+        .song-artist { font-size: 12px; color: #8da9c4; }
+        .song-writer { font-size: 10px; color: #ffd166; background: #111b2e; padding: 2px 6px; border-radius: 3px; border: 1px solid #ffd166; }
+        .song-comment { font-size: 12px; color: #e0e6ed; line-height: 1.4; margin-top: 4px; word-break: break-all; }
+
+        .hidden { display: none !important; }
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- 별자리가 보이는 밤 테마 헤더 -->
+        <header class="starry-header">
+            <div class="starry-title">
+                <span class="star-icon">🌌</span>
+                <div class="header-text">
+                    <h1>별자리가 보이는 밤</h1>
+                    <p id="user-info-text">별빛 아래 우리 둘만의 비밀 공간</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="toggleAudioCall()" title="음성통화">📞</button>
+                <!-- 🎵 노래 게시판 모달 버튼 -->
+                <button class="icon-btn" onclick="toggleMusicModal()" title="추천 노래 게시판">🎵</button>
+                <button class="icon-btn" onclick="toggleSettingsModal()" title="설정">⚙️</button>
+            </div>
+        </header>
+
+        <!-- 음성 통화 상태 바 -->
+        <div id="call-bar" class="call-bar hidden">
+            <span id="call-status">🎙️ 음성 연결 중...</span>
+            <button class="square-btn send-btn" style="background:#ff4b72; color:white; border-color:#ff4b72;" onclick="endCall()">종료</button>
+        </div>
+
+        <!-- 대화 출력 영역 -->
+        <div id="chat-box" class="chat-box">
+            <div class="system-msg">✨ 별자리가 보이는 밤, 둘만의 공간에 접속했습니다.</div>
+        </div>
+
+        <!-- 하단 입력 영역 -->
+        <footer class="input-area">
+            <button class="square-btn" onclick="document.getElementById('file-input').click()">+</button>
+            <input type="file" id="file-input" onchange="sendFile(event)">
+
+            <input type="text" id="msg-input" placeholder="별빛으로 전할 메시지..." onkeypress="if(event.key==='Enter') sendText()">
+
+            <button class="square-btn" onclick="sendReaction()" title="별빛 반응">⭐</button>
+            <button class="square-btn send-btn" onclick="sendText()">전송</button>
+        </footer>
+
+        <!-- 프로필 설정 모달 -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-card">
+                <h3>⚙️ 둘만의 프로필 설정</h3>
+                <div class="form-group">
+                    <label>내 닉네임</label>
+                    <input type="text" id="setting-nickname" placeholder="닉네임 입력">
+                </div>
+                <div class="form-group">
+                    <label>내 생일</label>
+                    <input type="date" id="setting-birthday">
+                </div>
+                <button class="square-btn send-btn" style="width:100%; margin-top:10px;" onclick="saveSettings()">저장 및 닫기</button>
+            </div>
+        </div>
+
+        <!-- 🎵 둘만의 노래 추천 게시판 모달 -->
+        <div id="music-modal" class="modal">
+            <div class="modal-card">
+                <h3>🎵 둘만의 추천 노래 게시판</h3>
+                
+                <!-- 게시글 작성 폼 -->
+                <div style="background: #0b111e; border: 1px solid #ffd166; padding: 10px; border-radius: 4px;">
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <input type="text" id="song-title-input" placeholder="노래 제목 (예: 밤편지)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <input type="text" id="song-artist-input" placeholder="가수 이름 (예: 아이유)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <textarea id="song-comment-input" placeholder="추천 이유 또는 같이 듣고 싶은 한줄 글..."></textarea>
+                    </div>
+                    <button class="square-btn send-btn" style="width:100%; margin-top:4px;" onclick="postSong()">노래 게시하기 🎶</button>
+                </div>
+
+                <!-- 게시글 목록 (카드 형태) -->
+                <div id="song-post-list" class="song-post-list">
+                    <!-- 게시글 카드들이 여기에 추가됨 -->
+                </div>
+
+                <button class="square-btn send-btn" style="width:100%; margin-top:6px;" onclick="toggleMusicModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="remote-audio" autoplay></audio>
+
+    <script>
+        const roomHash = window.location.hash ? window.location.hash.substring(1) : "starry-night-room";
+        const myPeerId = roomHash + "-" + Math.floor(Math.random() * 8999 + 1000);
+        const targetPeerId = roomHash + "-host";
+
+        const peer = new Peer(window.location.hash ? myPeerId : targetPeerId);
+        let conn = null;
+        let localStream = null;
+        let currentCall = null;
+
+        let userNickname = localStorage.getItem('star_nick') || "별빛탐험가";
+        let userBirthday = localStorage.getItem('star_birth') || "";
+        
+        // 추천 노래 게시글 저장 데이터 (로컬 스토리지 보관)
+        let songPosts = JSON.parse(localStorage.getItem('star_songs') || '[]');
+
+        document.getElementById('setting-nickname').value = userNickname;
+        document.getElementById('setting-birthday').value = userBirthday;
+        updateHeaderInfo();
+        renderSongPosts();
+
+        peer.on('open', id => {
+            if (window.location.hash) {
+                conn = peer.connect(targetPeerId);
+                setupChat();
+            }
+        });
+
+        peer.on('connection', c => {
+            conn = c;
+            setupChat();
+        });
+
+        peer.on('call', call => {
+            if (confirm("📞 음성 통화 요청이 왔습니다. 받으시겠습니까?")) {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                    .then(stream => {
+                        localStream = stream;
+                        call.answer(stream);
+                        showCallBar("🎙️ 통화 중...");
+                        call.on('stream', remoteStream => {
+                            document.getElementById('remote-audio').srcObject = remoteStream;
+                        });
+                        currentCall = call;
+                    })
+                    .catch(err => alert("마이크 권한 승인이 필요합니다."));
+            }
+        });
+
+        function setupChat() {
+            conn.on('data', data => {
+                if (data.type === 'text') appendMsg(data.sender + ": " + data.content, 'other');
+                if (data.type === 'file') appendFileMsg(data.sender, data.fileName, data.fileData, 'other');
+                if (data.type === 'reaction') appendMsg("⭐ " + data.sender + "님이 반짝이는 별빛을 보냈습니다!", 'other');
+                if (data.type === 'song') {
+                    songPosts.unshift(data.post);
+                    saveSongPosts();
+                    renderSongPosts();
+                    appendMsg("🎵 " + data.sender + "님이 추천 노래 게시글을 올렸습니다!", 'other');
+                }
+            });
+            appendMsg("✨ 1:1 밤하늘 암호화 연결이 완료되었습니다.", 'system');
+        }
+
+        function sendText() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (text && conn) {
+                conn.send({ type: 'text', sender: userNickname, content: text });
+                appendMsg("나: " + text, 'me');
+                input.value = '';
+            }
+        }
+
+        function sendFile(event) {
+            const file = event.
