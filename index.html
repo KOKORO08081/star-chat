@@ -298,6 +298,26 @@
             if (roomDisplay) roomDisplay.innerText = `#${roomName}`;
 
             updateHeaderInfo();
+
+            // 전송 버튼 및 엔터키 이벤트 직접 연결 (전역 범위 스코프 이슈 방지)
+            const sendBtn = document.querySelector('.send-btn[onclick*="sendText()"]');
+            const msgInput = document.getElementById('msg-input');
+
+            if (sendBtn) {
+                sendBtn.onclick = function(e) {
+                    e.preventDefault();
+                    window.sendText();
+                };
+            }
+
+            if (msgInput) {
+                msgInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        window.sendText();
+                    }
+                });
+            }
         });
 
         // 1. 실시간 메시지 수신 (웹소켓 오류 없는 실시간 전송)
@@ -331,6 +351,7 @@
         // 전역 함수 연동 (버튼 클릭용)
         window.sendText = function() {
             const input = document.getElementById('msg-input');
+            if (!input) return;
             const text = input.value.trim();
             if (text) {
                 push(messagesRef, {
