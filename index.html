@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>별자리가 보이는 밤 - Private Secret Space</title>
-    <!-- PeerJS 음성통화 라이브러리 -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
         
@@ -21,12 +19,12 @@
 
         .app-container { 
             width: 100%; 
-            max-width: 480px; 
+            max-width: 440px; 
             height: 92vh; 
             background: #17253d; 
             border: 2px solid #ffd166; 
-            border-radius: 6px; 
-            box-shadow: 0 0 25px rgba(255, 209, 102, 0.2); 
+            border-radius: 8px; 
+            box-shadow: 0 0 25px rgba(255, 209, 102, 0.25); 
             display: flex; 
             flex-direction: column; 
             position: relative;
@@ -55,7 +53,7 @@
             color: #ffd166; 
             width: 36px; 
             height: 36px; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             cursor: pointer; 
             font-size: 14px;
             display: flex;
@@ -100,7 +98,7 @@
         .msg-bubble { 
             max-width: 78%; 
             padding: 10px 14px; 
-            border-radius: 6px; 
+            border-radius: 8px; 
             font-size: 13px; 
             line-height: 1.4; 
             word-break: break-all; 
@@ -122,7 +120,7 @@
             border: 1px solid #3d5a80; 
         }
 
-        .msg-bubble img { max-width: 100%; border-radius: 4px; margin-top: 5px; }
+        .msg-bubble img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
         .msg-bubble a { color: #ffd166; text-decoration: underline; font-weight: bold; }
 
         .input-area { 
@@ -140,7 +138,7 @@
             color: #ffffff; 
             border: 1px solid #ffd166; 
             padding: 10px 14px; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             outline: none; 
             font-size: 13px;
         }
@@ -150,7 +148,7 @@
             color: #0b111e; 
             border: 1px solid #ffd166; 
             font-weight: bold; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             width: 38px; 
             height: 38px; 
             cursor: pointer; 
@@ -186,7 +184,7 @@
             max-height: 85vh;
             background: #17253d;
             border: 2px solid #ffd166;
-            border-radius: 6px; 
+            border-radius: 8px; 
             padding: 20px;
             box-shadow: 0 0 20px rgba(255, 209, 102, 0.3);
             display: flex;
@@ -203,7 +201,7 @@
             border: 1px solid #ffd166; 
             color: #fff; 
             padding: 8px 10px; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             font-size: 13px;
         }
         .form-group textarea { resize: none; height: 50px; }
@@ -222,7 +220,7 @@
             background: #0b111e; 
             border: 1px solid #ffd166; 
             padding: 12px; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             display: flex; 
             flex-direction: column; 
             gap: 6px; 
@@ -266,18 +264,18 @@
 
         <!-- 음성 통화 바 -->
         <div id="call-bar" class="call-bar hidden">
-            <span id="call-status">🎙️ 음성 연결 중...</span>
+            <span id="call-status">🎙️ 음성 연결 대기 중...</span>
             <button class="square-btn send-btn" id="btn-end-call" style="background:#ff4b72; color:white; border-color:#ff4b72;">종료</button>
         </div>
 
         <!-- 채팅창 -->
         <div id="chat-box" class="chat-box">
-            <div class="system-msg">✨ 비밀 방에 성공적으로 접속했습니다. 메시지를 입력해보세요!</div>
+            <div class="system-msg" id="room-welcome-msg">✨ 비밀 방에 접속했습니다.</div>
         </div>
 
         <!-- 하단 입력창 -->
         <footer class="input-area">
-            <button class="square-btn" id="btn-add-file">+</button>
+            <button class="square-btn" id="btn-add-file" title="파일 첨부">+</button>
             <input type="file" id="file-input">
 
             <input type="text" id="msg-input" placeholder="별빛으로 전할 메시지...">
@@ -289,7 +287,7 @@
         <!-- 설정 모달 -->
         <div id="settings-modal" class="modal">
             <div class="modal-card">
-                <h3>⚙️ 둘만의 프로필 설정</h3>
+                <h3>⚙️ 프로필 설정</h3>
                 <div class="form-group">
                     <label>내 닉네임</label>
                     <input type="text" id="setting-nickname" placeholder="닉네임 입력">
@@ -305,9 +303,9 @@
         <!-- 노래 게시판 모달 -->
         <div id="music-modal" class="modal">
             <div class="modal-card">
-                <h3>🎵 둘만의 추천 노래 게시판</h3>
+                <h3>🎵 추천 노래 게시판</h3>
                 
-                <div style="background: #0b111e; border: 1px solid #ffd166; padding: 10px; border-radius: 4px;">
+                <div style="background: #0b111e; border: 1px solid #ffd166; padding: 10px; border-radius: 6px;">
                     <div class="form-group" style="margin-bottom:6px;">
                         <input type="text" id="song-title-input" placeholder="노래 제목 (예: 밤편지)">
                     </div>
@@ -327,175 +325,248 @@
         </div>
     </div>
 
-    <audio id="remote-audio" autoplay></audio>
-
-    <!-- 스크립트 실행 구문 -->
+    <!-- 순수 자바스크립트 로직 (에러 없이 즉시 실행) -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var roomName = window.location.hash ? window.location.hash.substring(1) : "room2";
-            var userNickname = localStorage.getItem('star_nick') || "별빛탐험가";
-            var userBirthday = localStorage.getItem('star_birth') || "";
-            var songPosts = JSON.parse(localStorage.getItem('star_songs') || '[]');
+        (function() {
+            window.addEventListener('DOMContentLoaded', function () {
+                var roomHash = window.location.hash ? window.location.hash.substring(1) : "room2";
+                var userNickname = localStorage.getItem('star_nick') || "별빛탐험가";
+                var userBirthday = localStorage.getItem('star_birth') || "";
+                var songPosts = JSON.parse(localStorage.getItem('star_songs_' + roomHash) || '[]');
+                var localChatMsgs = JSON.parse(localStorage.getItem('star_msgs_' + roomHash) || '[]');
 
-            var nickInput = document.getElementById('setting-nickname');
-            var birthInput = document.getElementById('setting-birthday');
-            if (nickInput) nickInput.value = userNickname;
-            if (birthInput) birthInput.value = userBirthday;
+                // 초기 UI 설정
+                var nickInput = document.getElementById('setting-nickname');
+                var birthInput = document.getElementById('setting-birthday');
+                if (nickInput) nickInput.value = userNickname;
+                if (birthInput) birthInput.value = userBirthday;
 
-            updateHeaderInfo();
-            renderSongPosts();
+                var welcomeMsg = document.getElementById('room-welcome-msg');
+                if (welcomeMsg) welcomeMsg.innerText = "✨ 비밀 방 [# " + roomHash + "]에 성공적으로 접속했습니다!";
 
-            // 입력 및 클릭 이벤트 바인딩
-            document.getElementById('btn-send').addEventListener('click', sendText);
-            document.getElementById('msg-input').addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    sendText();
-                }
-            });
-
-            document.getElementById('btn-add-file').addEventListener('click', function () {
-                document.getElementById('file-input').click();
-            });
-            document.getElementById('file-input').addEventListener('change', sendFile);
-            document.getElementById('btn-star').addEventListener('click', sendReaction);
-
-            document.getElementById('btn-settings').addEventListener('click', function () {
-                document.getElementById('settings-modal').classList.toggle('active');
-            });
-            document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
-
-            document.getElementById('btn-music').addEventListener('click', function () {
-                document.getElementById('music-modal').classList.toggle('active');
-            });
-            document.getElementById('btn-close-music').addEventListener('click', function () {
-                document.getElementById('music-modal').classList.remove('active');
-            });
-            document.getElementById('btn-post-song').addEventListener('click', postSong);
-
-            function sendText() {
-                var input = document.getElementById('msg-input');
-                var text = input.value.trim();
-                if (text) {
-                    appendMsg("나: " + text, 'me');
-                    input.value = '';
-                }
-            }
-
-            function sendFile(event) {
-                var file = event.target.files[0];
-                if (!file) return;
-
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    appendFileMsg("나", file.name, e.target.result, 'me');
-                };
-                reader.readAsDataURL(file);
-            }
-
-            function sendReaction() {
-                appendMsg("⭐ 내가 반짝이는 별빛을 보냈습니다!", 'me');
-            }
-
-            function postSong() {
-                var titleInput = document.getElementById('song-title-input');
-                var artistInput = document.getElementById('song-artist-input');
-                var commentInput = document.getElementById('song-comment-input');
-
-                var title = titleInput.value.trim();
-                var artist = artistInput.value.trim();
-                var comment = commentInput.value.trim();
-
-                if (!title || !artist) {
-                    return alert("노래 제목과 가수를 입력해주세요!");
-                }
-
-                var newPost = {
-                    id: Date.now(),
-                    title: title,
-                    artist: artist,
-                    comment: comment || "이 노래 같이 들어요!",
-                    writer: userNickname
-                };
-
-                songPosts.unshift(newPost);
-                localStorage.setItem('star_songs', JSON.stringify(songPosts));
+                updateHeaderInfo();
                 renderSongPosts();
 
-                titleInput.value = '';
-                artistInput.value = '';
-                commentInput.value = '';
-            }
-
-            function renderSongPosts() {
-                var container = document.getElementById('song-post-list');
-                if (!container) return;
-                container.innerHTML = '';
-
-                if (songPosts.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#8da9c4; padding:20px;">아직 게시된 추천 노래가 없습니다.<br>위 폼에서 둘만의 노래를 추가해 보세요!</div>';
-                    return;
+                // 기존 저장 메시지 불러오기
+                if (localChatMsgs.length > 0) {
+                    localChatMsgs.forEach(function(item) {
+                        if (item.isFile) {
+                            appendFileMsg(item.sender, item.fileName, item.fileData, item.type, false);
+                        } else {
+                            appendMsg(item.text, item.type, false);
+                        }
+                    });
                 }
 
-                songPosts.forEach(function (post) {
-                    var card = document.createElement('div');
-                    card.className = 'song-post-card';
-                    card.innerHTML = `
-                        <div class="song-post-header">
-                            <div>
-                                <div class="song-title">🎶 ${post.title}</div>
-                                <div class="song-artist">${post.artist}</div>
+                // 이벤트 바인딩
+                var btnSend = document.getElementById('btn-send');
+                var msgInput = document.getElementById('msg-input');
+
+                if (btnSend) btnSend.addEventListener('click', sendText);
+                if (msgInput) {
+                    msgInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            sendText();
+                        }
+                    });
+                }
+
+                var btnAddFile = document.getElementById('btn-add-file');
+                var fileInput = document.getElementById('file-input');
+                if (btnAddFile && fileInput) {
+                    btnAddFile.addEventListener('click', function () { fileInput.click(); });
+                    fileInput.addEventListener('change', sendFile);
+                }
+
+                var btnStar = document.getElementById('btn-star');
+                if (btnStar) btnStar.addEventListener('click', sendReaction);
+
+                var btnSettings = document.getElementById('btn-settings');
+                var btnSaveSettings = document.getElementById('btn-save-settings');
+                var settingsModal = document.getElementById('settings-modal');
+
+                if (btnSettings && settingsModal) {
+                    btnSettings.addEventListener('click', function () {
+                        settingsModal.classList.toggle('active');
+                    });
+                }
+                if (btnSaveSettings) btnSaveSettings.addEventListener('click', saveSettings);
+
+                var btnMusic = document.getElementById('btn-music');
+                var btnCloseMusic = document.getElementById('btn-close-music');
+                var musicModal = document.getElementById('music-modal');
+                var btnPostSong = document.getElementById('btn-post-song');
+
+                if (btnMusic && musicModal) {
+                    btnMusic.addEventListener('click', function () {
+                        musicModal.classList.toggle('active');
+                    });
+                }
+                if (btnCloseMusic && musicModal) {
+                    btnCloseMusic.addEventListener('click', function () {
+                        musicModal.classList.remove('active');
+                    });
+                }
+                if (btnPostSong) btnPostSong.addEventListener('click', postSong);
+
+                var btnCall = document.getElementById('btn-call');
+                var btnEndCall = document.getElementById('btn-end-call');
+                var callBar = document.getElementById('call-bar');
+
+                if (btnCall && callBar) {
+                    btnCall.addEventListener('click', function() {
+                        callBar.classList.remove('hidden');
+                        document.getElementById('call-status').innerText = "🎙️ 상대방과 음성 연결 중...";
+                    });
+                }
+                if (btnEndCall && callBar) {
+                    btnEndCall.addEventListener('click', function() {
+                        callBar.classList.add('hidden');
+                    });
+                }
+
+                // 기능 메서드 정의
+                function sendText() {
+                    var input = document.getElementById('msg-input');
+                    if (!input) return;
+                    var text = input.value.trim();
+                    if (text) {
+                        var msgText = userNickname + ": " + text;
+                        appendMsg(msgText, 'me', true);
+                        input.value = '';
+                    }
+                }
+
+                function sendFile(event) {
+                    var file = event.target.files[0];
+                    if (!file) return;
+
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        appendFileMsg(userNickname, file.name, e.target.result, 'me', true);
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+                function sendReaction() {
+                    appendMsg("⭐ " + userNickname + "님이 반짝이는 별빛을 보냈습니다!", 'me', true);
+                }
+
+                function postSong() {
+                    var titleInput = document.getElementById('song-title-input');
+                    var artistInput = document.getElementById('song-artist-input');
+                    var commentInput = document.getElementById('song-comment-input');
+
+                    var title = titleInput ? titleInput.value.trim() : '';
+                    var artist = artistInput ? artistInput.value.trim() : '';
+                    var comment = commentInput ? commentInput.value.trim() : '';
+
+                    if (!title || !artist) {
+                        return alert("노래 제목과 가수를 입력해주세요!");
+                    }
+
+                    var newPost = {
+                        id: Date.now(),
+                        title: title,
+                        artist: artist,
+                        comment: comment || "이 노래 같이 들어요!",
+                        writer: userNickname
+                    };
+
+                    songPosts.unshift(newPost);
+                    localStorage.setItem('star_songs_' + roomHash, JSON.stringify(songPosts));
+                    renderSongPosts();
+
+                    if (titleInput) titleInput.value = '';
+                    if (artistInput) artistInput.value = '';
+                    if (commentInput) commentInput.value = '';
+                }
+
+                function renderSongPosts() {
+                    var container = document.getElementById('song-post-list');
+                    if (!container) return;
+                    container.innerHTML = '';
+
+                    if (songPosts.length === 0) {
+                        container.innerHTML = '<div style="text-align:center; font-size:12px; color:#8da9c4; padding:20px;">아직 게시된 추천 노래가 없습니다.<br>위 폼에서 둘만의 노래를 추가해 보세요!</div>';
+                        return;
+                    }
+
+                    songPosts.forEach(function (post) {
+                        var card = document.createElement('div');
+                        card.className = 'song-post-card';
+                        card.innerHTML = `
+                            <div class="song-post-header">
+                                <div>
+                                    <div class="song-title">🎶 ${post.title}</div>
+                                    <div class="song-artist">${post.artist}</div>
+                                </div>
+                                <span class="song-writer">작성자: ${post.writer}</span>
                             </div>
-                            <span class="song-writer">작성자: ${post.writer}</span>
-                        </div>
-                        <div class="song-comment">💬 ${post.comment}</div>
-                    `;
-                    container.appendChild(card);
-                });
-            }
-
-            function appendMsg(msg, type) {
-                var box = document.getElementById('chat-box');
-                if (!box) return;
-                var div = document.createElement('div');
-                div.className = type === 'system' ? 'system-msg' : `msg-bubble ${type}`;
-                div.innerText = msg;
-                box.appendChild(div);
-                box.scrollTop = box.scrollHeight;
-            }
-
-            function appendFileMsg(sender, fileName, fileData, type) {
-                var box = document.getElementById('chat-box');
-                if (!box) return;
-                var div = document.createElement('div');
-                div.className = `msg-bubble ${type}`;
-                
-                if (fileData.startsWith('data:image')) {
-                    div.innerHTML = `${sender}: <br><img src="${fileData}" alt="${fileName}">`;
-                } else {
-                    div.innerHTML = `${sender}: <br><a href="${fileData}" download="${fileName}">📎 ${fileName}</a>`;
+                            <div class="song-comment">💬 ${post.comment}</div>
+                        `;
+                        container.appendChild(card);
+                    });
                 }
-                box.appendChild(div);
-                box.scrollTop = box.scrollHeight;
-            }
 
-            function saveSettings() {
-                var nick = document.getElementById('setting-nickname').value || "별빛탐험가";
-                var birth = document.getElementById('setting-birthday').value;
-                userNickname = nick;
-                userBirthday = birth;
-                localStorage.setItem('star_nick', nick);
-                localStorage.setItem('star_birth', birth);
-                updateHeaderInfo();
-                document.getElementById('settings-modal').classList.remove('active');
-            }
+                function appendMsg(msg, type, save) {
+                    var box = document.getElementById('chat-box');
+                    if (!box) return;
+                    var div = document.createElement('div');
+                    div.className = type === 'system' ? 'system-msg' : `msg-bubble ${type}`;
+                    div.innerText = msg;
+                    box.appendChild(div);
+                    box.scrollTop = box.scrollHeight;
 
-            function updateHeaderInfo() {
-                var birthText = userBirthday ? ` | 🎂 ${userBirthday}` : '';
-                var el = document.getElementById('user-info-text');
-                if (el) el.innerText = `${userNickname}님${birthText}`;
-            }
-        });
+                    if (save) {
+                        localChatMsgs.push({ text: msg, type: type, isFile: false });
+                        localStorage.setItem('star_msgs_' + roomHash, JSON.stringify(localChatMsgs));
+                    }
+                }
+
+                function appendFileMsg(sender, fileName, fileData, type, save) {
+                    var box = document.getElementById('chat-box');
+                    if (!box) return;
+                    var div = document.createElement('div');
+                    div.className = `msg-bubble ${type}`;
+                    
+                    if (fileData.startsWith('data:image')) {
+                        div.innerHTML = `${sender}: <br><img src="${fileData}" alt="${fileName}">`;
+                    } else {
+                        div.innerHTML = `${sender}: <br><a href="${fileData}" download="${fileName}">📎 ${fileName}</a>`;
+                    }
+                    box.appendChild(div);
+                    box.scrollTop = box.scrollHeight;
+
+                    if (save) {
+                        localChatMsgs.push({ sender: sender, fileName: fileName, fileData: fileData, type: type, isFile: true });
+                        localStorage.setItem('star_msgs_' + roomHash, JSON.stringify(localChatMsgs));
+                    }
+                }
+
+                function saveSettings() {
+                    var nickEl = document.getElementById('setting-nickname');
+                    var birthEl = document.getElementById('setting-birthday');
+                    var nick = (nickEl && nickEl.value) ? nickEl.value.trim() : "별빛탐험가";
+                    var birth = birthEl ? birthEl.value : "";
+                    
+                    userNickname = nick;
+                    userBirthday = birth;
+                    localStorage.setItem('star_nick', nick);
+                    localStorage.setItem('star_birth', birth);
+                    updateHeaderInfo();
+                    
+                    if (settingsModal) settingsModal.classList.remove('active');
+                }
+
+                function updateHeaderInfo() {
+                    var birthText = userBirthday ? ` | 🎂 ${userBirthday}` : '';
+                    var el = document.getElementById('user-info-text');
+                    if (el) el.innerText = `${userNickname}님${birthText}`;
+                }
+            });
+        })();
     </script>
 </body>
 </html>
