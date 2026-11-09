@@ -1,267 +1,11 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
+<!-- ... existing code ... -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>별자리가 보이는 밤 - Private Secret Space</title>
+    <!-- PeerJS 실시간 P2P 라이브러리 추가 -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
-        
-        body { 
-            background-color: #0b111e; 
-            color: #f0f4f8; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            overflow: hidden;
-        }
-
-        .app-container { 
-            width: 100%; 
-            max-width: 440px; 
-            height: 92vh; 
-            background: #17253d; 
-            border: 2px solid #ffd166; 
-            border-radius: 8px; 
-            box-shadow: 0 0 25px rgba(255, 209, 102, 0.25); 
-            display: flex; 
-            flex-direction: column; 
-            position: relative;
-            overflow: hidden; 
-        }
-
-        .starry-header {
-            background: linear-gradient(180deg, #070b14 0%, #111b2e 100%);
-            border-bottom: 2px solid #ffd166;
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .starry-title { display: flex; align-items: center; gap: 10px; }
-        .star-icon { font-size: 24px; filter: drop-shadow(0 0 8px #ffd166); }
-        .header-text h1 { font-size: 15px; color: #ffd166; font-weight: 700; letter-spacing: 1px; }
-        .header-text p { font-size: 11px; color: #8da9c4; margin-top: 2px; }
-
-        .header-actions { display: flex; gap: 8px; }
-        
-        .icon-btn { 
-            background: #0b111e; 
-            border: 1px solid #ffd166; 
-            color: #ffd166; 
-            width: 36px; 
-            height: 36px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .icon-btn:hover { background: #ffd166; color: #0b111e; }
-
-        .call-bar {
-            background: #111b2e;
-            border-bottom: 2px solid #ffd166;
-            padding: 10px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            color: #ffd166;
-        }
-
-        .chat-box { 
-            flex: 1; 
-            padding: 16px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            background: #0b111e; 
-        }
-
-        .system-msg { 
-            align-self: center; 
-            font-size: 11px; 
-            color: #ffd166; 
-            background: #111b2e; 
-            border: 1px solid #ffd166; 
-            padding: 6px 14px; 
-            border-radius: 4px; 
-            text-align: center;
-        }
-
-        .msg-bubble { 
-            max-width: 78%; 
-            padding: 10px 14px; 
-            border-radius: 8px; 
-            font-size: 13px; 
-            line-height: 1.4; 
-            word-break: break-all; 
-            position: relative;
-        }
-
-        .msg-bubble.me { 
-            align-self: flex-end; 
-            background: #ffd166; 
-            color: #0b111e; 
-            font-weight: 600; 
-            border: 1px solid #ffc93c;
-        }
-
-        .msg-bubble.other { 
-            align-self: flex-start; 
-            background: #17253d; 
-            color: #ffffff; 
-            border: 1px solid #3d5a80; 
-        }
-
-        .msg-bubble img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
-        .msg-bubble a { color: #ffd166; text-decoration: underline; font-weight: bold; }
-
-        .input-area { 
-            padding: 12px 14px; 
-            background: #111b2e; 
-            border-top: 2px solid #ffd166; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-        }
-
-        .input-area input[type="text"] { 
-            flex: 1; 
-            background: #0b111e; 
-            color: #ffffff; 
-            border: 1px solid #ffd166; 
-            padding: 10px 14px; 
-            border-radius: 6px; 
-            outline: none; 
-            font-size: 13px;
-        }
-
-        .square-btn { 
-            background: #ffd166; 
-            color: #0b111e; 
-            border: 1px solid #ffd166; 
-            font-weight: bold; 
-            border-radius: 6px; 
-            width: 38px; 
-            height: 38px; 
-            cursor: pointer; 
-            font-size: 15px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            flex-shrink: 0;
-            transition: all 0.15s ease;
-        }
-        .square-btn:hover { background: #ffc93c; }
-
-        .send-btn { width: auto; padding: 0 16px; font-size: 13px; }
-
-        .modal {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 17, 30, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .modal.active { opacity: 1; pointer-events: auto; }
-
-        .modal-card {
-            width: 100%;
-            max-height: 85vh;
-            background: #17253d;
-            border: 2px solid #ffd166;
-            border-radius: 8px; 
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(255, 209, 102, 0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .modal-card h3 { color: #ffd166; margin-bottom: 16px; font-size: 16px; text-align: center; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; color: #8da9c4; margin-bottom: 4px; }
-        .form-group input, .form-group textarea { 
-            width: 100%; 
-            background: #0b111e; 
-            border: 1px solid #ffd166; 
-            color: #fff; 
-            padding: 8px 10px; 
-            border-radius: 6px; 
-            font-size: 13px;
-        }
-        .form-group textarea { resize: none; height: 50px; }
-
-        .song-post-list { 
-            flex: 1; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            margin: 12px 0;
-            padding-right: 4px;
-        }
-
-        .song-post-card { 
-            background: #0b111e; 
-            border: 1px solid #ffd166; 
-            padding: 12px; 
-            border-radius: 6px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 6px; 
-        }
-
-        .song-post-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed #3d5a80;
-            padding-bottom: 6px;
-        }
-
-        .song-title { font-size: 14px; font-weight: bold; color: #ffd166; }
-        .song-artist { font-size: 12px; color: #8da9c4; }
-        .song-writer { font-size: 10px; color: #ffd166; background: #111b2e; padding: 2px 6px; border-radius: 3px; border: 1px solid #ffd166; }
-        .song-comment { font-size: 12px; color: #e0e6ed; line-height: 1.4; margin-top: 4px; word-break: break-all; }
-
-        .hidden { display: none !important; }
-        #file-input { display: none; }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        <!-- 헤더 -->
-        <header class="starry-header">
-            <div class="starry-title">
-                <span class="star-icon">🌌</span>
-                <div class="header-text">
-                    <h1>별자리가 보이는 밤</h1>
-                    <p id="user-info-text">별빛 아래 우리 둘만의 비밀 공간</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn" id="btn-call" title="음성통화">📞</button>
-                <button class="icon-btn" id="btn-music" title="추천 노래 게시판">🎵</button>
-                <button class="icon-btn" id="btn-settings" title="설정">⚙️</button>
-            </div>
-        </header>
-
+<!-- ... existing code ... -->
         <!-- 음성 통화 바 -->
         <div id="call-bar" class="call-bar hidden">
             <span id="call-status">🎙️ 음성 연결 대기 중...</span>
@@ -270,62 +14,12 @@
 
         <!-- 채팅창 -->
         <div id="chat-box" class="chat-box">
-            <div class="system-msg" id="room-welcome-msg">✨ 비밀 방에 접속했습니다.</div>
+            <div class="system-msg" id="room-welcome-msg">✨ 비밀 방 연결 시도 중...</div>
         </div>
 
         <!-- 하단 입력창 -->
-        <footer class="input-area">
-            <button class="square-btn" id="btn-add-file" title="파일 첨부">+</button>
-            <input type="file" id="file-input">
-
-            <input type="text" id="msg-input" placeholder="별빛으로 전할 메시지...">
-
-            <button class="square-btn" id="btn-star" title="별빛 반응">⭐</button>
-            <button class="square-btn send-btn" id="btn-send">전송</button>
-        </footer>
-
-        <!-- 설정 모달 -->
-        <div id="settings-modal" class="modal">
-            <div class="modal-card">
-                <h3>⚙️ 프로필 설정</h3>
-                <div class="form-group">
-                    <label>내 닉네임</label>
-                    <input type="text" id="setting-nickname" placeholder="닉네임 입력">
-                </div>
-                <div class="form-group">
-                    <label>내 생일</label>
-                    <input type="date" id="setting-birthday">
-                </div>
-                <button class="square-btn send-btn" id="btn-save-settings" style="width:100%; margin-top:10px;">저장 및 닫기</button>
-            </div>
-        </div>
-
-        <!-- 노래 게시판 모달 -->
-        <div id="music-modal" class="modal">
-            <div class="modal-card">
-                <h3>🎵 추천 노래 게시판</h3>
-                
-                <div style="background: #0b111e; border: 1px solid #ffd166; padding: 10px; border-radius: 6px;">
-                    <div class="form-group" style="margin-bottom:6px;">
-                        <input type="text" id="song-title-input" placeholder="노래 제목 (예: 밤편지)">
-                    </div>
-                    <div class="form-group" style="margin-bottom:6px;">
-                        <input type="text" id="song-artist-input" placeholder="가수 이름 (예: 아이유)">
-                    </div>
-                    <div class="form-group" style="margin-bottom:6px;">
-                        <textarea id="song-comment-input" placeholder="추천 이유 또는 같이 듣고 싶은 한줄 글..."></textarea>
-                    </div>
-                    <button class="square-btn send-btn" id="btn-post-song" style="width:100%; margin-top:4px;">노래 게시하기 🎶</button>
-                </div>
-
-                <div id="song-post-list" class="song-post-list"></div>
-
-                <button class="square-btn send-btn" id="btn-close-music" style="width:100%; margin-top:6px;">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 순수 자바스크립트 로직 (에러 없이 즉시 실행) -->
+<!-- ... existing code ... -->
+    <!-- 실시간 P2P 통신 자바스크립트 로직 -->
     <script>
         (function() {
             window.addEventListener('DOMContentLoaded', function () {
@@ -335,19 +29,23 @@
                 var songPosts = JSON.parse(localStorage.getItem('star_songs_' + roomHash) || '[]');
                 var localChatMsgs = JSON.parse(localStorage.getItem('star_msgs_' + roomHash) || '[]');
 
+                var peer = null;
+                var conn = null;
+                var myUserId = Math.floor(Math.random() * 9000 + 1000);
+
+                // 고정 호스트 ID 및 파트너 ID
+                var targetPeerId = "starchat-" + roomHash;
+
                 // 초기 UI 설정
                 var nickInput = document.getElementById('setting-nickname');
                 var birthInput = document.getElementById('setting-birthday');
                 if (nickInput) nickInput.value = userNickname;
                 if (birthInput) birthInput.value = userBirthday;
 
-                var welcomeMsg = document.getElementById('room-welcome-msg');
-                if (welcomeMsg) welcomeMsg.innerText = "✨ 비밀 방 [# " + roomHash + "]에 성공적으로 접속했습니다!";
-
                 updateHeaderInfo();
                 renderSongPosts();
 
-                // 기존 저장 메시지 불러오기
+                // 기존 메시지 복원
                 if (localChatMsgs.length > 0) {
                     localChatMsgs.forEach(function(item) {
                         if (item.isFile) {
@@ -356,6 +54,62 @@
                             appendMsg(item.text, item.type, false);
                         }
                     });
+                }
+
+                // PeerJS 실시간 서버 연결 초기화
+                try {
+                    peer = new Peer(targetPeerId + "-" + myUserId, {
+                        debug: 1
+                    });
+
+                    peer.on('open', function(id) {
+                        updateWelcomeMsg("✨ 방 [# " + roomHash + "]에 입장했습니다. 상대방 탐색 중...");
+                        // 상대방 호스트에게 연결 시도
+                        tryConnect(targetPeerId);
+                    });
+
+                    // 나중에 접속하는 상대방 수신 대기
+                    peer.on('connection', function(c) {
+                        conn = c;
+                        setupP2PConnection();
+                    });
+                } catch(e) {
+                    console.error(e);
+                }
+
+                function tryConnect(hostId) {
+                    var c = peer.connect(hostId, { reliable: true });
+                    c.on('open', function() {
+                        conn = c;
+                        setupP2PConnection();
+                    });
+                }
+
+                function setupP2PConnection() {
+                    updateWelcomeMsg("✨ 상대방과 1:1 연결되었습니다! 메시지를 보내보세요.");
+                    conn.on('data', function(data) {
+                        if (data.type === 'chat') {
+                            appendMsg(data.sender + ": " + data.text, 'other', true);
+                        } else if (data.type === 'file') {
+                            appendFileMsg(data.sender, data.fileName, data.fileData, 'other', true);
+                        } else if (data.type === 'reaction') {
+                            appendMsg("⭐ " + data.sender + "님이 반짝이는 별빛을 보냈습니다!", 'other', true);
+                        } else if (data.type === 'song') {
+                            songPosts.unshift(data.post);
+                            localStorage.setItem('star_songs_' + roomHash, JSON.stringify(songPosts));
+                            renderSongPosts();
+                            appendMsg("🎵 " + data.sender + "님이 노래를 추천했습니다!", 'other', false);
+                        }
+                    });
+
+                    conn.on('close', function() {
+                        updateWelcomeMsg("⚠️ 상대방과의 연결이 끊어졌습니다.");
+                    });
+                }
+
+                function updateWelcomeMsg(msg) {
+                    var welcomeMsg = document.getElementById('room-welcome-msg');
+                    if (welcomeMsg) welcomeMsg.innerText = msg;
                 }
 
                 // 이벤트 바인딩
@@ -417,7 +171,7 @@
                 if (btnCall && callBar) {
                     btnCall.addEventListener('click', function() {
                         callBar.classList.remove('hidden');
-                        document.getElementById('call-status').innerText = "🎙️ 상대방과 음성 연결 중...";
+                        document.getElementById('call-status').innerText = "🎙️ 상대방과 연결 중...";
                     });
                 }
                 if (btnEndCall && callBar) {
@@ -426,14 +180,16 @@
                     });
                 }
 
-                // 기능 메서드 정의
+                // 전송 로직
                 function sendText() {
                     var input = document.getElementById('msg-input');
                     if (!input) return;
                     var text = input.value.trim();
                     if (text) {
-                        var msgText = userNickname + ": " + text;
-                        appendMsg(msgText, 'me', true);
+                        appendMsg("나: " + text, 'me', true);
+                        if (conn && conn.open) {
+                            conn.send({ type: 'chat', text: text, sender: userNickname });
+                        }
                         input.value = '';
                     }
                 }
@@ -444,13 +200,24 @@
 
                     var reader = new FileReader();
                     reader.onload = function (e) {
-                        appendFileMsg(userNickname, file.name, e.target.result, 'me', true);
+                        appendFileMsg("나", file.name, e.target.result, 'me', true);
+                        if (conn && conn.open) {
+                            conn.send({
+                                type: 'file',
+                                fileName: file.name,
+                                fileData: e.target.result,
+                                sender: userNickname
+                            });
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
 
                 function sendReaction() {
-                    appendMsg("⭐ " + userNickname + "님이 반짝이는 별빛을 보냈습니다!", 'me', true);
+                    appendMsg("⭐ 별빛 반응을 보냈습니다!", 'me', true);
+                    if (conn && conn.open) {
+                        conn.send({ type: 'reaction', sender: userNickname });
+                    }
                 }
 
                 function postSong() {
@@ -477,6 +244,10 @@
                     songPosts.unshift(newPost);
                     localStorage.setItem('star_songs_' + roomHash, JSON.stringify(songPosts));
                     renderSongPosts();
+
+                    if (conn && conn.open) {
+                        conn.send({ type: 'song', post: newPost, sender: userNickname });
+                    }
 
                     if (titleInput) titleInput.value = '';
                     if (artistInput) artistInput.value = '';
